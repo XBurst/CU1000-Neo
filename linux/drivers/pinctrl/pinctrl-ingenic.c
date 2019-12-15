@@ -48,6 +48,8 @@
 #define REG_SET(x) ((x) + 0x4)
 #define REG_CLEAR(x) ((x) + 0x8)
 
+#define REG_PZ_BASE(x) ((x) * 7)
+
 #define PINS_PER_GPIO_CHIP 32
 
 enum jz_version {
@@ -64,6 +66,7 @@ enum jz_version {
 
 struct ingenic_chip_info {
 	unsigned int num_chips;
+	unsigned int reg_offset;
 
 	const struct group_desc *groups;
 	unsigned int num_groups;
@@ -216,6 +219,7 @@ static const struct function_desc jz4740_functions[] = {
 
 static const struct ingenic_chip_info jz4740_chip_info = {
 	.num_chips = 4,
+	.reg_offset = 0x100,
 	.groups = jz4740_groups,
 	.num_groups = ARRAY_SIZE(jz4740_groups),
 	.functions = jz4740_functions,
@@ -339,6 +343,7 @@ static const struct function_desc jz4725b_functions[] = {
 
 static const struct ingenic_chip_info jz4725b_chip_info = {
 	.num_chips = 4,
+	.reg_offset = 0x100,
 	.groups = jz4725b_groups,
 	.num_groups = ARRAY_SIZE(jz4725b_groups),
 	.functions = jz4725b_functions,
@@ -592,6 +597,7 @@ static const struct function_desc jz4760_functions[] = {
 
 static const struct ingenic_chip_info jz4760_chip_info = {
 	.num_chips = 6,
+	.reg_offset = 0x100,
 	.groups = jz4760_groups,
 	.num_groups = ARRAY_SIZE(jz4760_groups),
 	.functions = jz4760_functions,
@@ -602,6 +608,7 @@ static const struct ingenic_chip_info jz4760_chip_info = {
 
 static const struct ingenic_chip_info jz4760b_chip_info = {
 	.num_chips = 6,
+	.reg_offset = 0x100,
 	.groups = jz4760_groups,
 	.num_groups = ARRAY_SIZE(jz4760_groups),
 	.functions = jz4760_functions,
@@ -880,6 +887,7 @@ static const struct function_desc jz4770_functions[] = {
 
 static const struct ingenic_chip_info jz4770_chip_info = {
 	.num_chips = 6,
+	.reg_offset = 0x100,
 	.groups = jz4770_groups,
 	.num_groups = ARRAY_SIZE(jz4770_groups),
 	.functions = jz4770_functions,
@@ -1013,6 +1021,7 @@ static const struct function_desc jz4780_functions[] = {
 
 static const struct ingenic_chip_info jz4780_chip_info = {
 	.num_chips = 6,
+	.reg_offset = 0x100,
 	.groups = jz4780_groups,
 	.num_groups = ARRAY_SIZE(jz4780_groups),
 	.functions = jz4780_functions,
@@ -1269,6 +1278,7 @@ static const struct function_desc x1000_functions[] = {
 
 static const struct ingenic_chip_info x1000_chip_info = {
 	.num_chips = 4,
+	.reg_offset = 0x100,
 	.groups = x1000_groups,
 	.num_groups = ARRAY_SIZE(x1000_groups),
 	.functions = x1000_functions,
@@ -1279,6 +1289,7 @@ static const struct ingenic_chip_info x1000_chip_info = {
 
 static const struct ingenic_chip_info x1000e_chip_info = {
 	.num_chips = 4,
+	.reg_offset = 0x100,
 	.groups = x1000_groups,
 	.num_groups = ARRAY_SIZE(x1000_groups),
 	.functions = x1000_functions,
@@ -1391,6 +1402,7 @@ static const struct function_desc x1500_functions[] = {
 
 static const struct ingenic_chip_info x1500_chip_info = {
 	.num_chips = 4,
+	.reg_offset = 0x100,
 	.groups = x1500_groups,
 	.num_groups = ARRAY_SIZE(x1500_groups),
 	.functions = x1500_functions,
@@ -1675,7 +1687,7 @@ static inline void ingenic_config_pin(struct ingenic_pinctrl *jzpc,
 	unsigned int idx = pin % PINS_PER_GPIO_CHIP;
 	unsigned int offt = pin / PINS_PER_GPIO_CHIP;
 
-	regmap_write(jzpc->map, offt * 0x100 +
+	regmap_write(jzpc->map, offt * jzpc->info->reg_offset +
 			(set ? REG_SET(reg) : REG_CLEAR(reg)), BIT(idx));
 }
 
@@ -1684,7 +1696,7 @@ static inline void ingenic_shadow_config_pin(struct ingenic_pinctrl *jzpc,
 {
 	unsigned int idx = pin % PINS_PER_GPIO_CHIP;
 
-	regmap_write(jzpc->map, X1000_GPIO_PZ_BASE +
+	regmap_write(jzpc->map, REG_PZ_BASE(jzpc->info->reg_offset) +
 			(set ? REG_SET(reg) : REG_CLEAR(reg)), BIT(idx));
 }
 
@@ -1701,7 +1713,7 @@ static inline bool ingenic_get_pin_config(struct ingenic_pinctrl *jzpc,
 	unsigned int offt = pin / PINS_PER_GPIO_CHIP;
 	unsigned int val;
 
-	regmap_read(jzpc->map, offt * 0x100 + reg, &val);
+	regmap_read(jzpc->map, offt * jzpc->info->reg_offset + reg, &val);
 
 	return val & BIT(idx);
 }
@@ -2045,7 +2057,7 @@ static int __init ingenic_gpio_probe(struct ingenic_pinctrl *jzpc,
 		return -ENOMEM;
 
 	jzgc->jzpc = jzpc;
-	jzgc->reg_base = bank * 0x100;
+	jzgc->reg_base = bank * jzpc->info->reg_offset;
 
 	jzgc->gc.label = devm_kasprintf(dev, GFP_KERNEL, "GPIO%c", 'A' + bank);
 	if (!jzgc->gc.label)

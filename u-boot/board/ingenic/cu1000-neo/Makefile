@@ -1,9 +1,10 @@
 #
-# Copyright (c) 2009 Wind River Systems, Inc.
-# Tom Rix <Tom.Rix at windriver.com>
+# Ingenic mensa makefile
 #
-# See file CREDITS for list of people who contributed to this
-# project.
+# Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
+# Author: Zoro <ykli@ingenic.cn>
+# Based on: board/reliableIPTV/urboard/Makefile
+#           Written by Paul Burton <paul.burton@imgtec.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -12,7 +13,7 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -23,26 +24,16 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)libregulator.o
+LIB	= $(obj)lib$(BOARD).o
 
-ifndef CONFIG_SPL_BUILD
-COBJS-$(CONFIG_REGULATOR) += regulator.o
-endif
-COBJS-$(CONFIG_PMU_ACT8600) += act8600.o
-COBJS-$(CONFIG_PMU_D2041) += d2041_regulator.o
-COBJS-$(CONFIG_PMU_RICOH6x) += ricoh619-regulator.o
-COBJS-$(CONFIG_PMU_SM5007) += sm5007-regulator.o
-COBJS-$(CONFIG_PMU_EA3056) += ea3056-regulator.o
+COBJS-y	:= board.o
 
-COBJS	:= $(COBJS-y)
-SRCS	:= $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS))
+SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS-y))
+SOBJS   := $(addprefix $(obj),$(SOBJS-y))
 
-all:	$(LIB)
-
-$(LIB):	$(obj).depend $(OBJS)
+$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
 	$(call cmd_link_o_target, $(OBJS))
-
 
 #########################################################################
 
@@ -51,4 +42,4 @@ include $(SRCTREE)/rules.mk
 
 sinclude $(obj).depend
 
-########################################################################
+#########################################################################

@@ -44,21 +44,21 @@ static unsigned char read_byte(struct i2c *i2c,int);
 
 static void i2c_scl(struct i2c *i2c,int bit)
 {
-	gpio_direction_output(i2c->scl,bit);
+	gpio_direction_output(90,bit);
 }
 
 static void i2c_sda(struct i2c *i2c,int bit)
 {
 	if(bit) {
-		gpio_direction_input(i2c->sda);
+		gpio_direction_input(91);
 	} else {
-		gpio_direction_output(i2c->sda,bit);
+		gpio_direction_output(91,bit);
 	}
 }
 
 static int i2c_read_sda(struct i2c *i2c)
 {
-	return gpio_get_value(i2c->sda);
+	return gpio_get_value(91);
 }
 
 /*-----------------------------------------------------------------------
